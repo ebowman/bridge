@@ -12,7 +12,7 @@ object Bridge extends App {
   val sum = People.map(_.crossingTime).sum // heuristic: sum/2 <= min time <= 2*sum
   (sum / 2 to 2 * sum).view.map(i => (i, State(timeRemaining = i).search)).find(!_._2.isEmpty) match {
     case Some((minimumMinutes, solutions)) =>
-      println("best time = " + minimumMinutes)
+      println("\nBest time = " + minimumMinutes + "\n")
       prettyPrint(solutions)
     case None => println("No solution found")
   }

@@ -1,12 +1,4 @@
-Alice 7
-Bob 11
-Candace 9
-Dave 6
-Eric 10
-Fred 5
-George 5
-#Henry 9
-#Alice 5
-#Bob 10
-#Candace 20
-#Dave 25
+Alice 5
+Bob 10
+Candace 20
+Dave 25
