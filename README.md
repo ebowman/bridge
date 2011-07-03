@@ -33,7 +33,7 @@ A nice hard input to solve is this:
     George 5
     Henry 9
 
-...which took around 3-4 hours.  Using the other implementations to solve this
+...which took around 15 minutes.  Using the other implementations to solve this
 input tends to exhaust memory; this version is extremely memory efficient.
 
 Note there is a code snippet from [Pavel Fatin's
