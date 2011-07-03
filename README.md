@@ -38,6 +38,6 @@ input tends to exhaust memory; this version is extremely memory efficient.
 
 Note there is a code snippet from [Pavel Fatin's
 blog](http://pavelfatin.com/scala-for-project-euler/), for generating prime
-numbers.  It is (c) 2011 by Pavel Fatin and doesn't (yet) have his permission.
+numbers.  It is (c) 2011 by Pavel Fatin and is used with permission.
 
 Enjoy.
