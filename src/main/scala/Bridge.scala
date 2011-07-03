@@ -1,51 +1,46 @@
-object Bridge extends App {
+/*
+ * Copyright 2011 Eric Bowman
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-  require(args.size == 1, "Usage: Bridge [path to people file]")
+trait Bridge {
 
-  val (people: Set[Person], scale: Int) = {
+  // set of people involved
+  val people: Set[Person]
 
-    // load contents of source file into scaledPeople
-    val scaledPeople: Set[Person] = io.Source.fromFile(args(0)).getLines().foldLeft(Set[Person]()) {
-      (set: Set[Person], line: String) =>
-        line.split("\\s+").toList match {
-          case first :: _ if first.startsWith("#") => set
-          case name :: minutes :: Nil => set + Person(name = name, crossingTime = minutes.toInt)
-          case _ => set
-        }
-    }
+  // scale factor for simplifying the problem
+  val scale: Int
 
-    // We may be able to transform this to a simpler problem, if a greatest common divisor exists
-    // for the set of crossing times.  We return from this block here the set of people and crossing
-    // times to solve, as well as a scaling factor to multiply the results by, to match the actual
-    // input instead of the
-    GCD.commonDivisor(scaledPeople.map(_.crossingTime)) match {
-      case Some(divisor) =>
-        (scaledPeople.map(p => p.copy(crossingTime = (p.crossingTime / divisor))), divisor)
-      case None =>
-        (scaledPeople, 1)
-    }
-  }
+  def progress(batteryCharge: Int): Unit = {}
 
   // heuristic: we start our search with a battery
   // life equal to the sum of everyone's crossing
   // time. If you think about it, no possible solution
   // can exist that takes less time than this.
-  val sum = people.map(_.crossingTime).sum
+  lazy val sum = people.map(_.crossingTime).sum
 
   // Using our heuristic to bound the solution, we use
   // a view -> map -> find pattern to make sure we do
   // only the minimal amount of work required.  Without
   // the view, we'd compute all the solutions before we
   // started looking through them for a solution.
-  (sum to 2 * sum).view.map {
-    i =>
-      println(new java.util.Date + ": " + i)
-      (i, State(timeRemaining = i).generate)
-  }.find(!_._2.isEmpty) match {
-    case Some((minimumMinutes: Int, solutions: Stream[Stream[State]])) =>
-      println("\nBest time = " + (scale * minimumMinutes) + "\n")
-      prettyPrint(solutions, scale)
-    case None => println("No solution found")
+  def solve: Option[(Int, Stream[Stream[State]])] = {
+    (sum to 2 * sum).view.map {
+      i =>
+        progress(i)
+        (i, State(timeRemaining = i).generate)
+    }.find(!_._2.isEmpty)
   }
 
   // A light is either on the left side, or the right side,
@@ -54,6 +49,7 @@ object Bridge extends App {
     type LightPosition = Value
     val OnLeft, OnRight = Value
   }
+
   import LightPosition._
 
   // Represents a person, and how it takes them to cross the bridge.
@@ -70,17 +66,17 @@ object Bridge extends App {
     // this state is a terminal state.  We use a Stream in order to keep
     // careful control over memory management.
     def next: Stream[State] = lightPos match {
-        // when the light is on the left, we come up with all combinations of
-        // 2 to consider what happens when that pair crosses the bridge.
-        // We adjust the time left based on the slower of the two, and
-        // synthesize a new state. Note also that we emit an empty stream
-        // if there is no further step to be made with the amount of battery left.
+      // when the light is on the left, we come up with all combinations of
+      // 2 to consider what happens when that pair crosses the bridge.
+      // We adjust the time left based on the slower of the two, and
+      // synthesize a new state. Note also that we emit an empty stream
+      // if there is no further step to be made with the amount of battery left.
       case OnLeft => for {pair <- left.toSeq.combinations(2).toStream
                           timeLeft = timeRemaining - pair.map(_.crossingTime).max
                           newState = State(left.diff(pair.toSet), OnRight, timeLeft) if timeLeft >= 0} yield newState
-        // when the light is on the right, we try each person on the right
-        // crossing back across the bridge, as long as there is some battery
-        // left when they get there.
+      // when the light is on the right, we try each person on the right
+      // crossing back across the bridge, as long as there is some battery
+      // left when they get there.
       case OnRight => for {person <- right.toStream
                            timeLeft = timeRemaining - person.crossingTime
                            newState = State(left + person, OnLeft, timeLeft) if timeLeft > 0} yield newState
@@ -115,27 +111,71 @@ object Bridge extends App {
   //   Candace & Bob crossed in 7 m (16)
   //   Bob came back in 3 m (19)
   //   Alice & Bob crossed in 5 m (24)
-  @annotation.tailrec
-  private def prettyPrint(paths: Stream[Stream[State]], scale: Int) {
-    if (!paths.isEmpty) {
-      var sum = 0
-      val forwardPath = paths.head.reverse
-      forwardPath.zip(forwardPath.tail).toIterator.foreach {
-        case (from: State, to: State) =>
-          val cost = from.timeRemaining - to.timeRemaining
-          sum += cost
-          from.lightPos match {
-            case OnLeft =>
-              println(from.left.diff(to.left).map(_.name).mkString(" & ") + " crossed in " + (cost * scale) + " m (" +
-                (sum * scale) + ")")
-            case OnRight =>
-              println(to.left.diff(from.left).map(_.name).mkString + " came back in " + (cost * scale) + " m (" +
-                (sum * scale) + ")")
-          }
+  def prettyPrint(paths: Stream[Stream[State]], scale: Int): String = {
+    val builder = new StringBuilder
+    @annotation.tailrec
+    def recurse(paths: Stream[Stream[State]]) {
+      builder.append("\n")
+      if (!paths.isEmpty) {
+        var sum = 0
+        val forwardPath = paths.head.reverse
+        forwardPath.zip(forwardPath.tail).toIterator.foreach {
+          case (from: State, to: State) =>
+            val cost = from.timeRemaining - to.timeRemaining
+            sum += cost
+            from.lightPos match {
+              case OnLeft =>
+                builder.append(from.left.diff(to.left).map(_.name).mkString(" & ") +
+                  " crossed in " + (cost * scale) + " m (" + (sum * scale) + ")\n")
+              case OnRight =>
+                builder.append(to.left.diff(from.left).map(_.name).mkString + " came back in " + (cost * scale) +
+                  " m (" + (sum * scale) + ")\n")
+            }
+        }
+        recurse(paths.tail)
       }
-      println()
-      prettyPrint(paths.tail, scale)
     }
+    recurse(paths)
+    builder.toString()
   }
 }
 
+object BridgeApp extends App with Bridge {
+
+  val (people: Set[Person], scale: Int) = {
+
+    require(args.size == 1, "Usage: BridgeApp [path to people file]")
+
+    // load contents of source file into scaledPeople
+    val scaledPeople: Set[Person] = io.Source.fromFile(args(0)).getLines().foldLeft(Set[Person]()) {
+      (set: Set[Person], line: String) =>
+        line.split("\\s+").toList match {
+          case first :: _ if first.startsWith("#") => set
+          case name :: minutes :: Nil => set + Person(name = name, crossingTime = minutes.toInt)
+          case _ => set
+        }
+    }
+
+    // We may be able to transform this to a simpler problem, if a greatest common divisor exists
+    // for the set of crossing times.  We return from this block here the set of people and crossing
+    // times to solve, as well as a scaling factor to multiply the results by, to match the actual
+    // input instead of the
+    GCD.commonDivisor(scaledPeople.map(_.crossingTime)) match {
+      case Some(divisor) =>
+        (scaledPeople.map(p => p.copy(crossingTime = (p.crossingTime / divisor))), divisor)
+      case None =>
+        (scaledPeople, 1)
+    }
+  }
+
+  override def progress(batteryCharge: Int) {
+    println(new java.util.Date + ": " + batteryCharge)
+  }
+
+  solve match {
+    case Some((minimumMinutes: Int, solutions: Stream[Stream[State]])) =>
+      println("Best time = " + (scale * minimumMinutes))
+      println(prettyPrint(solutions, scale))
+    case None => println("No solution found")
+  }
+}
