@@ -1,18 +1,20 @@
+import java.util.Date
+
 /*
- * Copyright 2011 Eric Bowman
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2011 Eric Bowman
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 trait Bridge {
 
@@ -30,13 +32,10 @@ trait Bridge {
   // can exist that takes less time than this.
   lazy val sum = people.map(_.crossingTime).sum
 
-  // Using our heuristic to bound the solution, we use
-  // a view -> map -> find pattern to make sure we do
-  // only the minimal amount of work required.  Without
-  // the view, we'd compute all the solutions before we
-  // started looking through them for a solution.
+  // Lazily stream until we find a solution, however long
+  // that takes, starting from the heuristic mentioned
   def solve: Option[(Int, Stream[Stream[State]])] = {
-    (sum to 2 * sum).view.map {
+    Stream.from(sum).map {
       i =>
         progress(i)
         (i, State(timeRemaining = i).generate)
@@ -146,6 +145,8 @@ object BridgeApp extends App with Bridge {
 
     require(args.size == 1, "Usage: BridgeApp [path to people file]")
 
+    println("Starting at " + new Date)
+
     // load contents of source file into scaledPeople
     val scaledPeople: Set[Person] = io.Source.fromFile(args(0)).getLines().foldLeft(Set[Person]()) {
       (set: Set[Person], line: String) =>
@@ -178,4 +179,5 @@ object BridgeApp extends App with Bridge {
       println(prettyPrint(solutions, scale))
     case None => println("No solution found")
   }
+  println("Finished at " + new Date)
 }
