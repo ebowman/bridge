@@ -49,7 +49,7 @@ class GCDSpec extends FlatSpec with ShouldMatchers with PropertyChecks with Prim
           // we don't guarantee to find the best one, just something.
           // So whatever we get should multiply perfectly into b.
           GCD.commonDivisor(a.map(_.prime * b.nonPrime)) match {
-            case Some(div) => (b.nonPrime / div) * div should equal(b.nonPrime)
+            case Some(div) => b.nonPrime % div should equal(0)
             case None => sys.error("Should not be possible")
           }
         }
