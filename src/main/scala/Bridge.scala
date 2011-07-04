@@ -1,5 +1,3 @@
-import java.util.Date
-
 /*
 * Copyright 2011 Eric Bowman
 *
@@ -16,6 +14,9 @@ import java.util.Date
 * limitations under the License.
 */
 
+import collection.parallel.immutable.ParSeq
+import java.util.Date
+
 trait Bridge {
 
   // set of people involved
@@ -24,7 +25,7 @@ trait Bridge {
   // scale factor for simplifying the problem
   val scale: Int
 
-  def progress(batteryCharge: Int): Unit = {}
+  def progress(batteryCharge: Int) {}
 
   // heuristic: we start our search with a battery
   // life equal to the sum of everyone's crossing
@@ -34,7 +35,7 @@ trait Bridge {
 
   // Lazily stream until we find a solution, however long
   // that takes, starting from the heuristic mentioned
-  def solve: Option[(Int, Stream[Stream[State]])] = {
+  def solve: Option[(Int, ParSeq[Stream[State]])] = {
     Stream.from(sum).map {
       i =>
         progress(i)
@@ -51,7 +52,7 @@ trait Bridge {
 
   import LightPosition._
 
-  // Represents a person, and how it takes them to cross the bridge.
+  // Represents a person, and how long it takes them to cross the bridge.
   case class Person(name: String, crossingTime: Int)
 
   // Represents a state in the game, and can generate all possible next states.
@@ -64,7 +65,7 @@ trait Bridge {
     // mapping State => Stream[State]. Note that stream may be empty if
     // this state is a terminal state.  We use a Stream in order to keep
     // careful control over memory management.
-    def next: Stream[State] = lightPos match {
+    def next = lightPos match {
       // when the light is on the left, we come up with all combinations of
       // 2 to consider what happens when that pair crosses the bridge.
       // We adjust the time left based on the slower of the two, and
@@ -87,10 +88,10 @@ trait Bridge {
     // comprehension with recurse is difficult to explain in detail, although conceptually
     // it's not too hard to understand that it is recursively enumerating every possible path
     // through state space.
-    def generate: Stream[Stream[State]] = {
+    def generate: ParSeq[Stream[State]] = {
       def unit[T](t: T): Stream[T] = List(t).toStream
-      def recurse(states: Stream[State]): Stream[Stream[State]] = {
-        (for (nextPath: Stream[State] <- states.head.next.map(_ #:: states)) yield {
+      def recurse(states: Stream[State]): ParSeq[Stream[State]] = {
+        (for (nextPath <- states.head.next.map(_ #:: states).par) yield {
           if (nextPath.head.left.isEmpty) {
             unit(nextPath)
           } else {
