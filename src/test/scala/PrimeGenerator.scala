@@ -23,9 +23,12 @@ trait PrimeGenerator {
 
   case class NonPrime(nonPrime: Int)
 
-  /** From http://pavelfatin.com/scala-for-project-euler/ Problem 7 */
-  lazy val ps: Stream[Int] = 2 #:: ps.map(i => Stream.from(i + 1).
-    find(j => ps.takeWhile(k => k * k <= j).forall(j % _ > 0)).get)
+  /**
+   * From http://pavelfatin.com/scala-for-project-euler/ Problem 7
+   * (with an improvement from Pavel via email)
+   */
+  lazy val ps: Stream[Int] = 2 #:: Stream.from(3).filter(i => ps.takeWhile(j => j * j <= i).forall(i % _ > 0))
+
 
   // 46th prime is 199, and with the choose(1, 4), we are careful to know that 199*199*199*199 fits into an int.
   val manyPrimes: Array[Int] = ps.take(46).toArray
@@ -36,7 +39,7 @@ trait PrimeGenerator {
   // generates a random prime
   val prime: Gen[Prime] = choose(0, manyPrimes.size - 1).map(index => Prime(manyPrimes(index)))
 
-  // generates a random non-primes
+  // generates a random non-prime
   val nonPrime: Gen[NonPrime] = choose(0, nonPrimes.size - 1).map(index => NonPrime(nonPrimes(index)))
 
   // generates a random list of primes
