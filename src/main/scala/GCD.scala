@@ -44,7 +44,7 @@ object GCD {
    */
   def lcd(x: Int, y: Int): Option[Int] = {
     ((primeFactors(x) intersect primeFactors(y)).toSet -- Set(1)) match {
-      case empty if empty == Set.empty => None
+      case empty if empty.isEmpty => None
       case full => Some(full.product)
     }
   }
@@ -52,11 +52,14 @@ object GCD {
   /**
    * Returns a common divisor, if one exists, across the list of numbers.
    */
-  def commonDivisor(numbers: Traversable[Int]): Option[Int] = {
-    val numSeq = numbers.toSeq
-    numSeq.zip(numSeq.tail).map(p => lcd(p._1, p._2)).flatten match {
+  def commonDivisor(numbers: Iterable[Int]): Option[Int] = {
+    numbers.toList match {
       case Nil => None
-      case list => Some(list.min)
+      case a :: Nil => None
+      case head :: tail => (Option(head) /: tail) {
+        case (None, _) => None
+        case (Some(a), b) => lcd(a, b)
+      }
     }
   }
 }

@@ -55,4 +55,12 @@ class GCDSpec extends FlatSpec with ShouldMatchers with PropertyChecks with Prim
         }
     }
   }
+
+  it should "correctly find no common divisors when there are none" in {
+    GCD.commonDivisor(List(6, 4, 7, 5)) should equal(None)
+  }
+
+  it should "solve an easy case" in {
+    GCD.commonDivisor(List(12, 6)) should equal(Some(6))
+  }
 }
