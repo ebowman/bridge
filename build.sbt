@@ -1,12 +1,16 @@
+organization := "ie.boboco"
+
 name := "Bridge"
 
-version := "1.0"
+version := "1.1"
 
-scalaVersion := "2.9.0-1"
+scalaVersion := "2.10.3"
 
 libraryDependencies ++= Seq(
-    "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test",
-    "org.scala-tools.testing" %% "scalacheck" % "1.9" % "test"
+    // see https://github.com/scalatest/scalatest/issues/181
+    // for why we are using 2.0.1-SNAP instead of 2.0
+    "org.scalatest" %% "scalatest" % "2.0.1-SNAP" % "test",
+    "org.scalacheck" %% "scalacheck" % "1.11.3" % "test"
 )
 
-// scalacOptions += "-unchecked"
+scalacOptions ++= Seq("-unchecked", "-deprecation")

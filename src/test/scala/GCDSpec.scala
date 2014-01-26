@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.FlatSpec
 
-class GCDSpec extends FlatSpec with ShouldMatchers with PropertyChecks with PrimeGenerator {
+class GCDSpec extends FlatSpec with Matchers with PropertyChecks with PrimeGenerator {
   type ? = this.type
 
   "The GCD object" should "correctly compute prime factors" in {

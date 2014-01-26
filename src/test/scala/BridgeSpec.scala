@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.FlatSpec
 
-class BridgeSpec extends FlatSpec with ShouldMatchers with Bridge {
+class BridgeSpec extends FlatSpec with Matchers with Bridge {
   type ? = this.type
 
   val people = Set(Person("Alice", 5), Person("Bob", 3), Person("Candace", 7), Person("Dave", 6))
