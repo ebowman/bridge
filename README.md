@@ -2,8 +2,9 @@ Memory-Efficient Bridge Solver
 ==============================
 
 15 April 2011 (Updated 3 July 2011)
+26 January 2014 (Upgraded to scala 2.10.3 & sbt 0.13.1)
 
-Inspired by 
+Inspired by
 [Logic Programming in Scala, Part 1](http://ambassadortothecomputers.blogspot.com/2011/04/logic-programming-in-scala-part-1.html),
 this program reads a configuration file listing some people, and how long each
 of them takes to cross the bridge, and solves the problem, indicating what is
