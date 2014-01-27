@@ -19,10 +19,10 @@ import java.util.Date
 trait Bridge {
 
   // set of people involved
-  val people: Set[Person]
+  def people: Set[Person]
 
   // scale factor for simplifying the problem
-  val scale: Int
+  def scale: Int
 
   def progress(batteryCharge: Int): Unit = {}
 
@@ -34,7 +34,7 @@ trait Bridge {
 
   // Lazily stream until we find a solution, however long
   // that takes, starting from the heuristic mentioned
-  def solve: Option[(Int, Stream[Stream[State]])] = {
+  lazy val solve: Option[(Int, Stream[Stream[State]])] = {
     Stream.from(sum).map {
       i =>
         progress(i)
@@ -150,9 +150,9 @@ object BridgeApp extends App with Bridge {
     // load contents of source file into scaledPeople
     val scaledPeople: Set[Person] = io.Source.fromFile(args(0)).getLines().foldLeft(Set[Person]()) {
       (set: Set[Person], line: String) =>
-        line.split("\\s+").toList match {
-          case first :: _ if first.startsWith("#") => set
-          case name :: minutes :: Nil => set + Person(name = name, crossingTime = minutes.toInt)
+        line.split("\\s+") match {
+          case Array(first, _*) if first.startsWith("#") => set
+          case Array(name, minutes) => set + Person(name = name, crossingTime = minutes.toInt)
           case _ => set
         }
     }
@@ -160,12 +160,12 @@ object BridgeApp extends App with Bridge {
     // We may be able to transform this to a simpler problem, if a greatest common divisor exists
     // for the set of crossing times.  We return from this block here the set of people and crossing
     // times to solve, as well as a scaling factor to multiply the results by, to match the actual
-    // input instead of the
-    GCD.commonDivisor(scaledPeople.map(_.crossingTime)) match {
-      case Some(divisor) =>
-        (scaledPeople.map(p => p.copy(crossingTime = (p.crossingTime / divisor))), divisor)
-      case None =>
-        (scaledPeople, 1)
+    // input instead of the scaled data
+    GCD.commonDivisor(scaledPeople.map(_.crossingTime)).map {
+      case divisor =>
+        (scaledPeople.map(p => p.copy(crossingTime = p.crossingTime / divisor)), divisor)
+    }.getOrElse {
+      (scaledPeople, 1)
     }
   }
 

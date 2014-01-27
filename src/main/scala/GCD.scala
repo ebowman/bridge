@@ -22,8 +22,8 @@ object GCD {
   /**
    * Computes the prime factors of the given argument.
    */
-  def primeFactors(num: Int): List[Int] = {
-    var n = num;
+  def primeFactors(num: Int): Seq[Int] = {
+    var n = num
     var i = 2
     val pending = collection.mutable.ListBuffer[Int]()
     while (i <= n) {
@@ -36,14 +36,14 @@ object GCD {
     if (n > 1) {
       pending += n
     }
-    pending.toList
+    pending.toSeq
   }
 
   /**
    * Returns the lowest common divisor, if any, between the two arguments.
    */
   def lcd(x: Int, y: Int): Option[Int] = {
-    ((primeFactors(x) intersect primeFactors(y)).toSet -- Set(1)) match {
+    (primeFactors(x) intersect primeFactors(y)).toSet - 1 match {
       case empty if empty.isEmpty => None
       case full => Some(full.product)
     }
@@ -53,10 +53,10 @@ object GCD {
    * Returns a common divisor, if one exists, across the list of numbers.
    */
   def commonDivisor(numbers: Iterable[Int]): Option[Int] = {
-    numbers.toList match {
-      case Nil => None
-      case a :: Nil => None
-      case head :: tail => (Option(head) /: tail) {
+    numbers.headOption match {
+      case None => None
+      case Some(a) if numbers.tail.isEmpty => None
+      case head => (head /: numbers.tail) {
         case (None, _) => None
         case (Some(a), b) => lcd(a, b)
       }
